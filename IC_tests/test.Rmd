@@ -1,0 +1,467 @@
+---
+title: "IC_tests"
+date: "24/10/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+          
+# Confidence Interval        
+
+
+You can set your workdirectory as follow:
+example : 
+
+```{R}
+setwd("/home/hjulienn/Teaching/Cours_PhD/IC_tests/")
+```
+
+##         Confidence interval (huge sample)
+
+```{R}  
+      ## Load the data
+      data = read.csv("./Data/lungA.csv")
+      
+      ## Number of observations
+      n = nrow(data)
+      
+      ## Get the quantile
+      u = qnorm(0.975)
+      
+      ## Parameter estimation
+      mean.pollution = mean(data$pollution)
+      sd.pollution = sd(data$pollution)
+      
+      ## Confidence interval (95%) of the mean
+      ICsup = mean.pollution + u*sd.pollution/sqrt(n)
+      ICinf = mean.pollution - u*sd.pollution/sqrt(n)
+      
+      ## print the result
+      cat(paste("95% confidence interval = [",round(ICinf,2),";",round(ICsup,2),"]"))
+```  
+
+```{R, fig.width=4,fig.height=4}
+
+      ## Representation (different from a boxplot)
+      boxplot(data$pollution)
+      points(mean.pollution,pch=16,col="red")
+      segments(1,ICinf,1,ICsup,lwd=3,col="green")
+```
+
+## Effect of the sample size on the Confidence interval size
+
+Let's check how the interval size varies with the sample size.
+We will draw a sample from a known distribution (gaussian, mu = 50, sd =5), estimate the mean and the IC.
+
+The code is given as (no need to understand it now).
+
+```{R, fig.width=8,fig.height=8}
+      samp_size = seq(5, 7505, 100)
+      means = c()
+      sds = c()
+      #Let's draw samples from a gaussian
+      
+      for(ns in samp_size)
+      {
+       gaussian_sample = rnorm(ns, mean=0, sd = 1)
+       means = c(means, mean(gaussian_sample))
+       sds = c(sds,sd(gaussian_sample)/sqrt(ns))
+      }
+        
+        ## Representation (different from a boxplot)
+  u = qnorm(0.975)
+      
+  plot(samp_size, means,pch=19, ylim = c(-1,1))
+  # horizontal error bars
+  arrows(samp_size, means-u*sds, samp_size, means+u*sds, length=0.05, angle=90, code=3)
+  abline(h=0,col="red")
+      
+```
+
+
+## Exercices (Ic of the mean)
+
+
+### Load the data
+
+```{R}
+data = read.csv("./Data/malaria_longitudinal_data_simul.csv")
+
+summary(data)
+```
+
+### 95% IC of temperature
+#### Extract from the entire table
+```{R}
+temp_control_week1 = data$temp[data$pv.lm=="yes" & data$group=="Control" & data$week==1]
+temp_control_week12 = data$temp[data$pv.lm=="yes" & data$group=="Control" & data$week==12]
+```
+#### Get the quantile
+```{R}
+u = qnorm(0.975)
+```
+#### Parameter estimation
+```{R}
+mean.week1 = mean(temp_control_week1);
+mean.week12 = mean(temp_control_week12)
+sd.week1 = sd(temp_control_week1);  
+sd.week12 = sd(temp_control_week12)
+n.week1 = length(temp_control_week1);   
+n.week12 = length(temp_control_week12)
+```
+
+#### Confidence interval (95%)
+```{R}
+ICsup.week1 = mean.week1 + u*sd.week1/sqrt(n.week1);  
+ICsup.week12 = mean.week12 + u*sd.week12/sqrt(n.week12)
+ICinf.week1 = mean.week1 - u*sd.week1/sqrt(n.week1);  
+ICinf.week12 = mean.week12 - u*sd.week12/sqrt(n.week12)
+
+cat(paste("95% confidence interval = [",round(ICinf.week1,2),";",round(ICsup.week1,2),"]"))
+cat(paste("95% confidence interval = [",round(ICinf.week12,2),";",round(ICsup.week12,2),"]"))
+```
+
+
+##     Exercices (Ic of the mean)
+
+
+### Load the data
+```{R}
+data = read.csv("./Data/malaria_longitudinal_data_simul.csv")
+
+summary(data)
+```
+
+## 95% IC of temperature
+```{R}
+## Extract from the entire table
+temp_control_week1 = data$temp[data$pv.lm=="yes" & data$group=="Control" & data$week==1]
+temp_control_week12 = data$temp[data$pv.lm=="yes" & data$group=="Control" & data$week==12]
+
+## Get the quantile
+u = qnorm(0.975)
+
+## Parameter estimation
+mean.week1 = mean(temp_control_week1);
+mean.week12 = mean(temp_control_week12)
+sd.week1 = sd(temp_control_week1);  
+sd.week12 = sd(temp_control_week12)
+n.week1 = length(temp_control_week1);   
+n.week12 = length(temp_control_week12)
+
+## Confidence interval (95%)
+ICsup.week1 = mean.week1 + u*sd.week1/sqrt(n.week1);  
+ICsup.week12 = mean.week12 + u*sd.week12/sqrt(n.week12)
+ICinf.week1 = mean.week1 - u*sd.week1/sqrt(n.week1);  
+ICinf.week12 = mean.week12 - u*sd.week12/sqrt(n.week12)
+
+cat(paste("95% confidence interval = [",round(ICinf.week1,2),";",round(ICsup.week1,2),"]"))
+cat(paste("95% confidence interval = [",round(ICinf.week12,2),";",round(ICsup.week12,2),"]"))
+```
+
+## 90% IC of hemo for each group
+
+```{R}
+## Extract from the entire table
+hemo_control_week1 = data$haem.hb.level[data$group=="Control" & data$week==1]
+hemo_art_week1 = data$haem.hb.level[data$group=="ART" & data$week==1]
+hemo_artpq_week1 = data$haem.hb.level[data$group=="ART&PQ" & data$week==1]
+
+## Get the quantile
+u = qnorm(0.95)
+
+## Parameter estimation
+mean.control = mean(hemo_control_week1); 
+mean.art = mean(hemo_art_week1);   
+mean.artpq = mean(hemo_artpq_week1)
+sd.control = sd(hemo_control_week1);      sd.art = sd(hemo_art_week1);        sd.artpq = sd(hemo_artpq_week1)
+n.control = length(hemo_control_week1);   n.art = length(hemo_art_week1);     n.artpq = length(hemo_artpq_week1)
+
+## Confidence interval (95%)
+ICsup.control = mean.control + u*sd.control/sqrt(n.control);  ICsup.art = mean.art + u*sd.art/sqrt(n.art);  ICsup.artpq = mean.artpq + u*sd.artpq/sqrt(n.artpq)
+ICinf.control = mean.control - u*sd.control/sqrt(n.control);  ICinf.art = mean.art - u*sd.art/sqrt(n.art);  ICinf.artpq = mean.artpq - u*sd.artpq/sqrt(n.artpq)
+
+cat(paste("90% confidence interval = [",round(ICinf.control,2),";",round(ICsup.control,2),"]"))
+cat(paste("90% confidence interval = [",round(ICinf.art,2),";",round(ICsup.art,2),"]"))
+cat(paste("90% confidence interval = [",round(ICinf.artpq,2),";",round(ICsup.artpq,2),"]"))
+```
+
+
+## Confidence interval (small sample)
+### 95% IC of viscosity
+```{R}
+vi = c(78, 84, 91, 76, 79, 71, 83, 84, 75, 90)
+
+## Get the quantile
+t = qt(0.975,9)
+
+## Parameter estimation
+mean.vi = mean(vi)
+sd.vi = sd(vi)
+
+## Confidence interval (95%)
+ICsup = mean.vi + t*sd.vi/sqrt(10)
+ICinf = mean.vi - t*sd.vi/sqrt(10)
+cat(paste("95% confidence interval = [",round(ICinf,2),";",round(ICsup,2),"]"))
+```
+## Exercices (Ic of the mean, small samples)
+### 95% IC of the hemo (UTAMUP village)
+
+### Get the data
+```{R}
+temp_week1 =  data$haem.hb.level[data$village=="UTAMUP" & data$group=="ART" & data$week==1]
+temp_week12=  data$haem.hb.level[data$village=="UTAMUP" & data$group=="ART" & data$week==12]
+
+## Get the size
+n1 = length(temp_week1)
+n12 = length(temp_week12)
+
+## Get the quantile
+t1 = qt(0.975,n1-1)
+t12 = qt(0.975,n12-1)
+
+## Parameter estimation
+mean.week1  = mean(temp_week1);
+mean.week12  = mean(temp_week12)
+sd.week1  = sd(temp_week1);
+sd.week12  = sd(temp_week12)
+
+## Confidence interval (95%)
+ICsup.week1 = mean.week1 + t1*sd.week1/sqrt(n1);
+ICsup.week12 = mean.week12 + t12*sd.week12/sqrt(n12)
+ICinf.week1 = mean.week1 - t1*sd.week1/sqrt(n1);
+ICinf.week12 = mean.week12 - t12*sd.week12/sqrt(n12)
+
+cat(paste("95% confidence interval = [",round(ICinf.week1,2),";",round(ICsup.week1,2),"]"))
+cat(paste("95% confidence interval = [",round(ICinf.week12,2),";",round(ICsup.week12,2),"]"))
+
+```
+
+
+
+##      Confidence intervals (Bootstrapping)
+
+```{R, fig.width = 5, fig.height = 5}
+## data
+x = c(43, 55, 45, 46, 57, 52, 61, 47, 52, 57, 48, 57, 52, 62, 50, 53, 72, 58, 58, 45)
+hist(x,breaks=3)
+
+## Number of resampling
+B = 5000
+
+## Resampling
+estim = c()
+for(i in 1:B){
+  subsamp = sample(x,size = 20,replace = TRUE)
+  if(i%%500==0){
+  print(subsamp)
+  }
+  estim = c(estim, mean(subsamp))    
+}
+## Representation (histogram)
+hist(estim,main = paste("Mean distribution (B=",B,")"))
+mean.boot = mean(estim)
+
+## Get the CI
+ICinf = quantile(estim,probs = 0.025)
+ICsup = quantile(estim,probs = 0.975)
+cat(paste("95% confidence interval = [",round(ICinf,2),";",round(ICsup,2),"]"))
+
+## Representation (add IC on the hist)
+abline(v=ICinf,col="red",lwd=4)
+abline(v=ICsup,col="red",lwd=4)
+
+```
+
+Notice that the distribution of the mean is much closer to the gaussian than the  number of patient by day (illustration of the central limit theorem). 
+
+
+## Exercice -- Bootstrap
+
+```{R}
+### Get the data
+
+x = data$haem.hb.level[data$village=="UTAMUP" & data$group=="ART" & data$week==1]
+
+## Number of resampling
+B = 15000
+
+## Resampling
+estim = c()
+for(i in 1:B)
+{
+  subsamp = sample(x,size = length(x),replace = TRUE)
+  estim = c(estim, mean(subsamp))    
+}
+## Representation (histogram)
+hist(estim,main = paste("Mean distribution (B =", B,")"))
+
+## Get the CI
+ICinf = quantile(estim,probs = 0.025)
+ICsup = quantile(estim,probs = 0.975)
+cat(paste("95% confidence interval = [",round(ICinf,2),";",round(ICsup,2),"]"))
+
+## Representation (add IC on the hist)
+abline(v=ICinf,col="red",lwd=4)
+abline(v=ICsup,col="red",lwd=4)
+```
+
+
+
+
+## IC for a proportion
+
+### 95% IC of the smoker proportion
+
+```{R}
+data = read.csv("./Data/lungA.csv")
+
+## Get the data
+x = data$smoker
+
+## Get the size
+n = length(x)
+
+## Get the quantile
+u = qnorm(0.975)
+
+## Parameter estimation
+prop = sum(x)/n
+sd.prop = sqrt(prop*(1-prop)/n)
+
+## Confidence interval (95%)
+ICsup = prop + u*sd.prop
+ICinf = prop - u*sd.prop
+cat(paste("95% confidence interval = [",round(ICinf,2),";",round(ICsup,2),"]"))
+```
+
+## Exercices (Ic of the proportion, hugesmall samples)
+
+### 95% IC proportion of patients ARTPQ
+```{R}
+## Load the data
+data = read.csv("./Data/malaria_longitudinal_data_simul.csv")
+
+## Get the data
+x1 = data$pv.lm[data$group=="ART&PQ" & data$week==1]
+x12 = data$pv.lm[data$group=="ART&PQ" & data$week==12]
+
+## Get the size
+n1 = length(x1)
+n12 = length(x12)
+
+## Get the quantile
+u = qnorm(0.975)
+
+## Parameter estimation
+prop1 = sum(x1=="yes")/n1; 
+prop12 = sum(x12=="yes")/n12
+sd.prop1 = sqrt(prop1*(1-prop1)/n1); 
+sd.prop12 = sqrt(prop12*(1-prop12)/n12)
+
+## Confidence interval (90%)
+ICsup1 = prop1 + u*sd.prop1; 
+ICsup12 = prop12 + u*sd.prop12
+ICinf1 = prop1 - u*sd.prop1; 
+ICinf12 = prop12 - u*sd.prop12
+cat(paste("95% confidence interval = [",round(ICinf1,2),";",round(ICsup1,2),"]"))
+cat(paste("95% confidence interval = [",round(ICinf12,2),";",round(ICsup12,2),"]"))
+```
+
+## 95% IC proportion of patients ARTPQ (without the gaussian approximation)
+
+```{R}
+## Get the data
+x = data$pv.lm[data$group=="ART&PQ" & data$week==12]
+
+## Get the size
+n = length(x)
+
+## Parameter estimation
+prop = sum(x=="yes")/n
+
+## Confidence interval (95%)
+ICsup = qbinom(0.975,n,prop)/n
+ICinf = qbinom(0.025,n,prop)/n
+
+cat(paste("95% confidence interval = [",round(ICinf,2),";",round(ICsup,2),"]"))
+```
+
+#    Optional exercices
+## Q1 
+## Extract from the entire table
+```{R}
+temp_ART_week1  = data$haem.hb.level[data$pv.lm=="yes" & data$group=="ART" & data$week==1]
+temp_ART_week12 = data$haem.hb.level[data$pv.lm=="yes" & data$group=="ART" & data$week==12]
+
+## Get the quantile
+u = qnorm(0.95)
+
+## Parameter estimation
+mean.week1 = mean(temp_ART_week1);  mean.week12 = mean(temp_ART_week12)
+sd.week1 = sd(temp_ART_week1);      sd.week12 = sd(temp_ART_week12)
+n.week1 = length(temp_ART_week1);   n.week12 = length(temp_ART_week12)
+
+## Confidence interval (95%)
+ICsup.week1 = mean.week1 + u*sd.week1/sqrt(n.week1);  ICsup.week12 = mean.week12 + u*sd.week12/sqrt(n.week12)
+ICinf.week1 = mean.week1 - u*sd.week1/sqrt(n.week1);  ICinf.week12 = mean.week12 - u*sd.week12/sqrt(n.week12)
+
+cat(paste("95% confidence interval = [",round(ICinf.week1,2),";",round(ICsup.week1,2),"]"))
+cat(paste("95% confidence interval = [",round(ICinf.week12,2),";",round(ICsup.week12,2),"]"))
+```
+
+## Q2
+
+## Extract from the entire table
+```{R}
+temp_ART_week1  = data$haem.hb.level[data$pv.lm=="yes" & data$group=="ART" & data$week==1 & data$village=="UTAMUP"]
+temp_ART_week12 = data$haem.hb.level[data$pv.lm=="yes" & data$group=="ART" & data$week==12  & data$village=="UTAMUP"]
+
+## Get the size
+n1 = length(temp_ART_week1)
+n12 = length(temp_ART_week12)
+
+## Get the quantile
+t1 = qt(0.975,n1-1)
+t12 = qt(0.975,n12-1)
+
+## Parameter estimation
+mean.week1 = mean(temp_ART_week1);  mean.week12 = mean(temp_ART_week12)
+sd.week1 = sd(temp_ART_week1);      sd.week12 = sd(temp_ART_week12)
+
+## Confidence interval (95%)
+ICsup.week1 = mean.week1 + t1*sd.week1/sqrt(n1);  ICsup.week12 = mean.week12 + t12*sd.week12/sqrt(n12)
+ICinf.week1 = mean.week1 - t1*sd.week1/sqrt(n1);  ICinf.week12 = mean.week12 - t12*sd.week12/sqrt(n12)
+
+cat(paste("95% confidence interval = [",round(ICinf.week1,2),";",round(ICsup.week1,2),"]"))
+cat(paste("95% confidence interval = [",round(ICinf.week12,2),";",round(ICsup.week12,2),"]"))
+
+```
+
+############### Proportions ######################
+```{R}
+## Extract from the entire table
+tmp  = data$village[data$pv.lm=="yes" & data$group=="ART&PQ" & data$week==12]
+
+## Get the size
+n = length(tmp)
+
+## Get the quantile
+u = qnorm(0.95)
+
+## Parameter estimation
+prop = sum(tmp=="UTAMUP")/n
+sd.prop = sqrt(prop*(1-prop)/n)
+
+## Confidence interval (90%)
+ICsup = prop + u*sd.prop; ICsupBin = qbinom(0.95,n,prop)/n
+ICinf = prop - u*sd.prop; ICinfBin = qbinom(0.05,n,prop)/n
+
+cat(paste("95% confidence interval = [",round(ICinf,2),";",round(ICsup,2),"]"))
+cat(paste("95% confidence interval = [",round(ICinfBin,2),";",round(ICsupBin,2),"]"))
+```
+
+

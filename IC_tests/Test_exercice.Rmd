@@ -1,0 +1,74 @@
+---
+title: "test_example"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{R}
+setwd("/home/hjulienn/Teaching/Cours_PhD/IC_tests/")
+```
+
+# Tests
+##       Comparaison of means
+### EXERCISES ON LUNG DATASET
+
+```{R}
+## Get the data
+data = read.csv("./Data/lungA.csv")
+xmale = data$tumor_size[data$gender=="male"]; xfemale = data$tumor_size[data$gender=="female"]
+
+## Parameter estimation
+mu.male = mean(xmale); mu.female = mean(xfemale)
+sigma2.male = var(xmale); sigma2.female = var(xfemale)
+n.male = length(xmale); n.female = length(xfemale)
+
+## Test statistic
+S = (mu.male - mu.female)/sqrt(sigma2.male/(n.male) + sigma2.female/(n.female))
+
+## Critical value
+cv = qnorm(0.025)
+
+## p-value (Normal approx)
+pv.norm = 2*pnorm(-S)
+
+## p-value (Welch test)
+pv.welch = 2*pt(-S,df=83.76)
+
+
+## Run t.test
+res.test1 = t.test(xmale,xfemale)
+
+## Alternative 
+res.test2 = t.test(data$tumor_size~data$gender)
+
+print(res.test1)
+print(res.test2)
+```
+
+
+
+# EXERCISES ON MALARIA DATASET
+
+```{R}
+## Get the data
+data <- read.csv("./Data/malaria_longitudinal_data_simul.csv")
+
+## Compare mean temperature of sick and not sick W1
+temp_sick_w1 <- data$temp[data$week == 1 & data$pv.lm == "yes"]
+temp_nosick_w1 <- data$temp[data$week == 1 & data$pv.lm == "no"]
+t.test(temp_sick_w1, temp_nosick_w1)
+
+## Compare mean temperature of sick and not sick W1
+haem_control_sick_w12 <- data$haem.hb.level[data$week == 12 & data$pv.lm == "yes" & data$group == "Control"]
+haem_control_nosick_w12 <- data$haem.hb.level[data$week == 12 & data$pv.lm == "no" & data$group == "Control"]
+t.test(haem_control_sick_w12, haem_control_nosick_w12)
+
+## Compare proportion of PCR-sick in control group and ART&PQ group at week 12
+sick_control_w12 <- data$pv.qpcr[data$week == 12 & data$group == "Control"]
+sick_artpq_w12 <- data$pv.qpcr[data$week == 12 & data$group == "ART&PQ"]
+n_control_w12 <- length(sick_control_w12)
+n_artpq_w12 <- length(sick_artpq_w12)
+prop.test(x = c(sum(sick_control_w12 == "yes"), sum(sick_artpq_w12 == "yes", na.rm = TRUE)), n = c(n_control_w12, n_artpq_w12))
+```

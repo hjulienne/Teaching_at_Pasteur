@@ -1,0 +1,87 @@
+---
+title: "PCA in 15 minutes (!)"
+author: "EP"
+date: "11/10/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Goals of Principal Components Analysis 
+
+* Explore the multivariate structure of a dataset
+* Decrease dimension of a dataset 
+* Visualization tool 
+* Explore relationships between variables of a dataset
+* Quality control : visualisation of batch effect
+* Visualisation of a biological signal (if it exists)
+
+## Data 
+
+* At least 3 quantitative variables (active)
+* A few categorical variables (supplementary)
+* Don't forget to transform your data if needed (try log)
+
+## Principle of the method 
+
+### With maths
+
+* Computation of eigen vectors and eigen values of the correlation matrix between variables
+* Projection into the space of eigen vectors
+* Iterated power algorithm
+
+### With hands
+
+* Projection of the data into a subspace that maximizes the distances among observations 
+* Maximization of the inertia 
+
+## Example with R on iris dataset
+
+What you need to tune when performing PCA 
+
+* Number of axes to plot
+* Centering and scaling? 
+* For variables : explore correlations : define a threshold on contribution
+* Coloration by qualitative variables
+
+```{r}
+library(FactoMineR)
+library(factoextra)
+
+# Load the iris dataset
+data(iris)
+# read the help
+?iris
+
+# compute the PCA decomposition
+respcairis <- PCA(iris[,1:4], scale = T, graph = F)
+# check the percentage of variance captured by each component
+respcairis
+respcairis$eig
+fviz_screeplot(respcairis, addlabels = TRUE)
+
+# Plot the samples in the space spanned by PC1 and PC2
+# color by species
+fviz_pca_ind(respcairis,
+axes = c(1,2),
+invisible = 'quali',
+label = 'none',
+habillage = iris$Species)
+
+# color by cos2
+fviz_pca_ind(respcairis,
+axes = c(1,2),
+invisible = 'quali',
+label = 'none',
+col.ind = 'cos2')
+
+# Plot the variable contributions to the PCs
+fviz_pca_var(respcairis,
+axes = c(1,2))
+library("corrplot")
+corrplot(respcairis$var$cos2)
+
+```
+

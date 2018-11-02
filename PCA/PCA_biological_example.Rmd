@@ -1,0 +1,184 @@
+---
+title: "PCA in 15 minutes (!)"
+author: "NP and HJ"
+date: "29/10/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Goals of Principal Components Analysis 
+
+* Explore the multivariate structure of a dataset
+* Decrease dimension of a dataset 
+* Visualization tool 
+* Explore relationships between variables of a dataset
+* Quality control : visualisation of batch effect
+* Visualisation of a biological signal (if it exists)
+
+## Data 
+
+* 1 quantitative variable (gene expression)
+* A few categorical variables (e.g. cancer cell line)
+
+
+## Principle of the method 
+
+### With maths
+
+* Computation of eigen vectors and eigen values of the correlation matrix between variables
+* Projection into the space of eigen vectors
+* Iterated power algorithm
+
+### With hands
+
+* Projection of the data into a subspace that maximizes the distances among observations 
+* Maximization of the inertia 
+
+## What you need to tune when performing PCA 
+
+* Number of axes to plot
+* Centering and scaling? 
+* For variables : explore correlations : define a threshold on contribution
+* Coloration by qualitative variables
+
+## Example with R on Multidrug data set:
+
+The multidrug dataset contains the expression of 48 known human ABC transporter genes with patterns of drug activity in 60 diverse cancer cell lines  
+
+We will first explore the structure of the ABC transporter expression dataset with PCA.
+
+Then, we will use PCA to visualize how resistance to drugs is associated to ABC.
+
+```{r}
+library(FactoMineR)
+library(factoextra)
+library(mixOmics)
+
+
+# load and inspect data
+data(multidrug)  # Multidrug data set contains 
+dim(multidrug$ABC.trans)  
+
+```
+ multidrug$ABC.trans data matrix with 60 rows and 48 columns. The expression of the 48 human ABC transporters for the 60 cell lines.
+
+A list containing two character vector components: 
+
+* Sample : The names of the 60 cell line which were analysed 
+* Class : the tissue of the 60 cell lines. 
+
+The NCI-60 panel includes cell lines derived from cancers of colorectal (7 cell lines), renal (8), ovarian (6), breast (8), prostate (2), lung (9) and central nervous system origin (6), as well as leukemias (6) and melanomas (8). 
+
+```{r}
+print(multidrug$cell.line)
+```
+
+
+```{r}
+# Extract gene expression
+X <- multidrug$ABC.trans 
+
+# compute the PCA decomposition
+respca <- PCA(X, scale = T, graph = F, ncp = 10)
+
+# check the percentage of variance captured by each component
+fviz_screeplot(respca, addlabels = TRUE)
+```
+
+The percentage explained by each PC are relatively low. For instance the percentage of variance projected in the first PC plan is 23%. This mean that our best view point is far from capturing the total structure of the dataset. This best view point is still interesting but we have to keep that in mind. 
+
+
+Plot the samples in the space spanned by PC1 and PC2 and color by cancer tissue
+
+```{r}
+fviz_pca_ind(respca,
+axes = c(1,2),
+invisible = 'quali', pointshape=16,
+label = 'none', pointsize=3.5,
+habillage = as.factor(multidrug$cell.line$Class))
+```
+
+From the PCA sample plots, we can observe some separation between the different cell lines. The sample plot on the first 2 principal components shows an interesting separation of the Melanoma cell lines along the first and second components. 
+
+```{r}
+# color by cos2
+fviz_pca_ind(respca,
+axes = c(1,2),
+invisible = 'quali',
+label = 'none',
+col.ind = 'cos2')
+```
+
+# Plot the variable contributions to the PCs
+```{r}
+fviz_pca_var(respca,
+axes = c(1,2), col.var = "cos2")
+```
+
+This is quite a busy plot! We can filter variable with a low cos2 (not well represent by the two first PCs).
+
+```{r}
+fviz_pca_var(respca,
+axes = c(1,2), , select.var = list(cos2 = 0.4),geom=c("text"), repel=TRUE)
+```
+
+We can represent the data points and variables on the same plot help interpretation:
+```{r}
+fviz_pca_biplot(respca,
+axes = c(1,2), , select.var = list(cos2 = 0.4), repel=TRUE,pointsize=3.5,
+habillage = as.factor(multidrug$cell.line$Class))
+```
+
+On the graph, melanoma seems to be linked to a higher expression of ABCB5 transporter. 
+```{r, fig.width=10,fig.height=12}
+library("corrplot")
+corrplot(respca$var$cos2)
+```
+
+## Effect of transporter on the efficiency of drugs
+
+We are going to visualize resistance to compound in PC plans.
+
+```{r}
+fviz_pca_biplot(respca, pointsize=3.5,
+axes = c(1,2), , select.var = list(cos2 = 0.4),col.var = "black", gradient.cols = c("blue", "#f9f7a4", "red"),
+geom.ind = "point", geom.var = c("text", "arrow"), repel=TRUE, col.ind = multidrug$compound[, 401] )
+```
+Cell types with a high PC1 seems to be more resistant to the compound 401.
+
+```{r}
+fviz_pca_biplot(respca, pointsize=3.5,
+axes = c(1,2),  select.var = list(cos2 = 0.4),col.var = "black", gradient.cols = c("blue", "#f9f7a4", "red"),
+geom.ind = "point", geom.var = c("text", "arrow"), repel=TRUE, col.ind = multidrug$compound[, 1212] )
+```
+
+Melanoma cell types seems to be more resistant to the 1212 compound. Here it is not possible to 
+to known if the resistance is confered by the cell type or by the transporter. In a real study we would have to imagine an experiment to distinguish between the two hypothesis.
+
+
+## Note that all the interesting information is not necessarily on the first plan
+```{r}
+# visualize resistance to the compound 1292
+
+fviz_pca_biplot(respca, pointsize=3.5,
+axes = c(3,4), , select.var = list(cos2 = 0.2),col.var = "black", gradient.cols = c("blue", "#f9f7a4", "red"),
+geom.ind = "point", geom.var = c("text", "arrow"), repel=TRUE, col.ind = multidrug$compound[, 1292] )
+```
+
+The transporter ABCB1 seems to confer resistance to the compound 1292.
+
+We will use a statistical test to evaluate this effect rigorously. 
+We will use the cor.test function:
+
+H0 : The pearson correlation between the ABCB1 expression level and the compound 1292 is equal to zero
+H1 : The pearson correlation between the ABCB1 expression level and the compound 1292 is different from zero.
+
+```{r}
+cor.test(X[,"ABCB1"], multidrug$compound[,1292])
+```
+
+
+
