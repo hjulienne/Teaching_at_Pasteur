@@ -1,5 +1,5 @@
 ---
-title: "Clustering_Biological_example"
+title: "Clustering on ABC transporter expression"
 author: "HJ and NP"
 date: "November 3, 2018"
 output: html_document
@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Clustering on ABC transporters
+### Partitioning around medoids
 
 ```{r}
 library(FactoMineR)
@@ -21,29 +21,82 @@ library(cluster)
 data(multidrug)  # Multidrug data set contains 
 dim(multidrug$ABC.trans)  
 
-```
-
-```{r}
-
-X <- multidrug$ABC.trans[,-12]
-fviz_nbclust(X, pam, method = "silhouette")
-```
-
-
-According to the Silhouette criterion, 2 is a good number of cluster. We will apply a medoid clustering with 2 centers:
-
-```{r}
-cl = pam(x = X, 2)
-```
-
-
-```{r}
-respca <- PCA(X, scale = T, graph = F, ncp = 10)
+respca <- PCA(multidrug$ABC.trans, scale = T, graph = F, ncp = 2)
+X <- respca$ind$coord
 # color by cluster
+```
 
-fviz_pca_ind(respca,
+```{r}
+fviz_nbclust(respca$ind$coord, pam, method = "silhouette")
+```
+
+
+According to the Silhouette criterion, 3 is a good number of cluster. We will apply a medoid clustering with 3 centers:
+
+```{r}
+cl = pam(x = respca$ind$coord, 3)
+```
+
+
+```{r}
+fviz_pca_biplot(respca,
 axes = c(1,2),
 invisible = 'quali',
-label = 'none',
-habillage = as.factor(cl$cluster), pointsize=3)
+label = 'var', select.var=list(cos2=0.4),
+habillage = as.factor(cl$cluster), pointsize=3, repel=TRUE)
+
+```
+
+
+```{r}
+plot(silhouette(cl))
+```
+
+
+Let's test with an anova if clusters influence the expression of the transporter ABCB5.   
+```{r}
+lm1 <- lm(multidrug$ABC.trans[,"ABCB5"] ~ as.factor(cl$cluster))
+summary(lm1)
+```
+
+## Study dataset structure with hierarchical clustering
+
+```{r}
+# We remove the column 12 because it contains missing values
+
+X <- multidrug$ABC.trans[,-12]
+h1 <- hclust(dist(X), method="single")
+h2 <- hclust(dist(X), method="average")
+h3 <- hclust(dist(X), method="complete")
+plot(h1)
+plot(h2)
+plot(h3)
+```
+
+```{r, fig.width=12}
+plot(h3, label = multidrug$cell.line$Sample)
+```
+We notice that T47D cancer cell line has a very peculiar expression pattern that is not shared by any other cell line.
+
+```{r, fig.width=12}
+plot(h3, label = multidrug$cell.line$Class)
+```
+
+Some tissue tends to group themselve together (RENAL) but it is far from systematic.
+
+```{r, fig.width=8, fig.height=10}
+library(gplots)
+library(RColorBrewer)
+col_cancer = brewer.pal(9,"Set3")
+names(col_cancer) = unique(multidrug$cell.line$Class)
+# choose for example the "spectral" palette and create a gradient of colors
+myPalette <- colorRampPalette(rev(brewer.pal(11, "Spectral")))
+
+# We will use euclidean distance and Ward method to build the dendrograms
+hclusfun <- function(x) hclust(dist(x), method="ward.D")
+row.names(X)=multidrug$cell.line$Class
+heatmap.2(X, dendrogram="both", scale="row", 
+RowSideColors=col_cancer[multidrug$cell.line$Class], trace="none", col=myPalette, cexRow =1.25,cexCol = 1.25,
+
+hclustfun = hclusfun)
 ```

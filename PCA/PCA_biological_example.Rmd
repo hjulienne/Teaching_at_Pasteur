@@ -49,7 +49,7 @@ The multidrug dataset contains the expression of 48 known human ABC transporter 
 
 We will first explore the structure of the ABC transporter expression dataset with PCA.
 
-Then, we will use PCA to visualize how resistance to drugs is associated to ABC.
+Then, we will use PCA to visualize how resistance to drugs is associated to ABC transporters.
 
 ```{r}
 library(FactoMineR)
@@ -60,9 +60,8 @@ library(mixOmics)
 # load and inspect data
 data(multidrug)  # Multidrug data set contains 
 dim(multidrug$ABC.trans)  
-
 ```
- multidrug$ABC.trans data matrix with 60 rows and 48 columns. The expression of the 48 human ABC transporters for the 60 cell lines.
+ multidrug$ABC.trans data matrix has 60 rows and 48 columns and contain the expression of the 48 human ABC transporters for the 60 cell lines.
 
 A list containing two character vector components: 
 
