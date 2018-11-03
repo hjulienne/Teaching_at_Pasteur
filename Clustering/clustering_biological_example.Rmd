@@ -1,0 +1,49 @@
+---
+title: "Clustering_Biological_example"
+author: "HJ and NP"
+date: "November 3, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Clustering on ABC transporters
+
+```{r}
+library(FactoMineR)
+library(factoextra)
+library(mixOmics)
+library(cluster)
+
+# load and inspect data
+data(multidrug)  # Multidrug data set contains 
+dim(multidrug$ABC.trans)  
+
+```
+
+```{r}
+
+X <- multidrug$ABC.trans[,-12]
+fviz_nbclust(X, pam, method = "silhouette")
+```
+
+
+According to the Silhouette criterion, 2 is a good number of cluster. We will apply a medoid clustering with 2 centers:
+
+```{r}
+cl = pam(x = X, 2)
+```
+
+
+```{r}
+respca <- PCA(X, scale = T, graph = F, ncp = 10)
+# color by cluster
+
+fviz_pca_ind(respca,
+axes = c(1,2),
+invisible = 'quali',
+label = 'none',
+habillage = as.factor(cl$cluster), pointsize=3)
+```

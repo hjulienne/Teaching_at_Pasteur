@@ -148,6 +148,8 @@ hclusfun <- function(x) hclust(dist(x), method="ward.D")
 heatmap.2(t(dt), dendrogram="both", scale="none",
           ColSideColors=colpatients[annot$patient], 
           trace="none", key=TRUE, col=myPalette, hclustfun = hclusfun)
+
+
 ## Heatmap while centering the genes 
 heatmap.2(t(dt), dendrogram="both", scale="row", 
           ColSideColors=colpatients[annot$patient], trace="none", col=myPalette, 
